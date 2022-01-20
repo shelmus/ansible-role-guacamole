@@ -1,0 +1,6 @@
+---
+# vars file for ansible-role-guacamole
+
+ldap_ext: https://apache.org/dyn/closer.lua/guacamole/"{{ guac_version }}"/binary/guacamole-auth-ldap-"{{ guac_version }}".tar.gz
+duo_ext: https://apache.org/dyn/closer.lua/guacamole/"{{ guac_version }}"/binary/guacamole-auth-duo-"{{ guac_version }}".tar.gz
+totp_ext: https://apache.org/dyn/closer.lua/guacamole/"{{ guac_version }}"/binary/guacamole-auth-totp-"{{ guac_version }}".tar.gz

@@ -1,0 +1,103 @@
+---
+# tasks file for ansible-role-guacamole
+
+# add debian backports
+- name: add backports
+  ansible.builtin.apt_repository:
+    repo: deb http://deb.debian.org/debian buster-backports main
+    state: present
+
+# update and install packages
+- name: install all required packages
+  apt:
+    pkg:
+      - tomcat9
+      - tomcat9-admin
+      - tomcat9-common
+      - tomcat9-user
+      - build-essential
+      - libcairo2-dev
+      - libjpeg62-turbo-dev
+      - libpng-dev
+      - libtool-bin
+      - libossp-uuid-dev
+      - libavcodec-dev
+      - libavformat-dev
+      - libavutil-dev
+      - libswscale-dev
+      - libpango1.0-dev
+      - libssh2-1-dev
+      - libvncserver-dev
+      - libtelnet-dev
+      - libssl-dev
+      - libvorbis-dev
+      - libwebp-dev
+      - libpulse-dev
+      - freerdp2-dev/buster-backports
+
+#### guacd ####
+
+# download latest version set in defaults.
+- name: Download and unarchive tar
+  ansible.builtin.unarchive:
+    src: https://downloads.apache.org/guacamole/"{{ guac_version }}"/source/guacamole-server-"{{ guac_version }}".tar.gz
+    dest: /opt/
+
+# run shell command for compile
+- name: configure
+  command: ./configure --with-systemd-dir=/etc/systemd/system
+  args:
+    chdir: "/opt/guacamole-server-{{ guac_version }}"
+
+# run shell command for make
+- name: make
+  command: make
+  args:
+    chdir: "/opt/guacamole-server-{{ guac_version }}"
+
+# run shell command for make install
+- name: make-install
+  command: make install
+  args:
+    chdir: "/opt/guacamole-server-{{ guac_version }}"
+
+# run ldconfig
+- name: run ldconfig
+  command: ldconfig
+
+# start and enable service
+- name: enable guacd service
+  ansible.builtin.service:
+    name: guacd
+    state: started
+    enabled: true
+
+#### gaucamole ####
+
+# make directory
+- name: create guacamole directory
+  file:
+    path: /etc/guacamole
+    state: directory
+
+# download war file for use
+- name: download latest guacamole.war
+  get_url:
+    url: https://downloads.apache.org/guacamole/"{{ guac_version }}"/binary/guacamole-"{{ guac_version }}".war
+    dest: /etc/guacamole/guacamole.war
+
+#### guacamole extentions ####
+
+- name: downloading extentions
+  ansible.builtin.unarchive:
+    src: "{{ item }}"
+    dest: /etc/guacamole/extentions/
+  with_items: "{{ extentions_urls }}"
+
+# symlink files to tomcat and trigger tomcat restart
+- name: symlink war to tomcat
+  ansible.builtin.file:
+    src: /etc/guacamole/guacamole.war
+    dest: /var/lib/tomcat9/webapps/
+    state: link
+  notify: restart_tomcat

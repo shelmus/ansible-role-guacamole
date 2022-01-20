@@ -1,0 +1,8 @@
+---
+# defaults file for ansible-role-guacamole
+
+guac_version: "1.4.0"
+extentions_urls:
+  - "{{ ldap_ext }}"
+  - "{{ duo_ext }}"
+  - "{{ totp_ext }}"
